@@ -10,7 +10,7 @@
 module Data.CritBit.Tree
     (
     -- * Operators
-    -- , (!)
+    , (!)
     -- , (\\)
 
     -- * Query
@@ -132,8 +132,8 @@ module Data.CritBit.Tree
     , findMax
     , deleteMin
     , deleteMax
-    -- , deleteFindMin
-    -- , deleteFindMax
+    , deleteFindMin
+    , deleteFindMax
     , updateMin
     , updateMax
     , updateMinWithKey
@@ -148,6 +148,13 @@ import Data.CritBit.Core
 import Data.CritBit.Types.Internal
 import Prelude hiding (foldl, foldr, lookup, null, map)
 import qualified Data.List as List
+
+-- | O(log n). Find the value at a key. Calls 'error' when the element can not be found.
+--
+-- > fromList [("a",5), ("b",3)] ! "c"    Error: element not in the map
+-- > fromList [("a",5), ("a",3)] ! "a" == 5
+(!) :: (CritBitKey k) => CritBit k v -> k -> v
+m ! k = lookupWith (error "Data.CritBit.Tree.!: element not in map") id k m
 
 -- | /O(1)/. Is the map empty?
 --
@@ -495,6 +502,24 @@ deleteMax (CritBit root) = CritBit (go root) where
   go i@(Internal left right byte otherBits) = case (go right) of
     Empty -> left
     r -> id $! i {iright = r}
+
+-- | /O(log n)/. Delete and find the minimal element.
+deleteFindMin :: CritBit k v -> ((k, v), CritBit k v)
+deleteFindMin (CritBit root) = go root where
+  go Empty = error "Data.CritBit.Tree.deleteFindMin: empty map"
+  go (Leaf k v) = ((k, v), Empty)
+  go i@(Internal left right byte otherBits) = case (go left) of
+    (kv, Empty) -> (kv, right)
+    (kv, l) -> (kv, id $! i {ileft = l})
+
+-- | /O(log n)/. Delete and find the maximal element.
+deleteFindMax :: CritBit k v -> ((k, v), CritBit k v)
+deleteFindMax (CritBit root) = go root where
+  go Empty = error "Data.CritBit.Tree.deleteFindMax: empty map"
+  go (Leaf k v) = ((k, v), Empty)
+  go i@(Internal left right byte otherBits) = case (go right) of
+    (kv, Empty) -> (kv, left)
+    (kv, r) -> (kv, id $! i {iright = r})
 
 -- | /O(log n)/. Update the value at the minimal key.
 updateMin :: (v -> Maybe v) -> CritBit k v -> CritBit k v
