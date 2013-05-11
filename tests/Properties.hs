@@ -108,16 +108,42 @@ t_map _ (KV kvs) = mappedC == mappedM
           mappedM = Map.toList . Map.map fun $ (Map.fromList kvs)
 
 t_findMin :: (CritBitKey k, Ord k) => k -> KV k -> Bool
-t_findMin _ (KV kvs) = C.findMin (C.fromList kvs) == Map.findMin (Map.fromList kvs)
+t_findMin _ (KV kvs) = if kvs == [] then True else C.findMin (C.fromList kvs) == Map.findMin (Map.fromList kvs)
 
 t_findMax :: (CritBitKey k, Ord k) => k -> KV k -> Bool
-t_findMax _ (KV kvs) = C.findMax (C.fromList kvs) == Map.findMax (Map.fromList kvs)
+t_findMax _ (KV kvs) = if kvs == [] then True else C.findMax (C.fromList kvs) == Map.findMax (Map.fromList kvs)
 
 t_deleteMin :: (CritBitKey k, Ord k) => k -> KV k -> Bool
 t_deleteMin _ (KV kvs) = C.toList (C.deleteMin (C.fromList kvs)) == Map.toList (Map.deleteMin (Map.fromList kvs))
 
-t_deleteMin :: (CritBitKey k, Ord k) => k -> KV k -> Bool
+t_deleteMax :: (CritBitKey k, Ord k) => k -> KV k -> Bool
 t_deleteMax _ (KV kvs) = C.toList (C.deleteMax (C.fromList kvs)) == Map.toList (Map.deleteMax (Map.fromList kvs))
+
+t_updateMin :: (CritBitKey k, Ord k) => k -> KV k -> Bool
+t_updateMin _ (KV kvs) = C.toList (C.updateMin f (C.fromList kvs)) == Map.toList (Map.updateMin f (Map.fromList kvs)) where
+  f x
+    | even x = Nothing
+    | otherwise = Just (x + 3)
+
+t_updateMax :: (CritBitKey k, Ord k) => k -> KV k -> Bool
+t_updateMax _ (KV kvs) = C.toList (C.updateMax f (C.fromList kvs)) == Map.toList (Map.updateMax f (Map.fromList kvs)) where
+  f x
+    | even x = Nothing
+    | otherwise = Just (x + 3)
+
+t_updateMinWithKey :: (CritBitKey k, Ord k) => k -> KV k -> Bool
+t_updateMinWithKey k (KV kvs) = C.toList (C.updateMinWithKey f (C.fromList kvs')) == Map.toList (Map.updateMinWithKey f (Map.fromList kvs')) where
+  kvs' = map (\(a, b) -> (a, (k, b))) kvs
+  f k' (_, x)
+    | even x = Nothing
+    | otherwise = Just (k', x + 3)
+
+t_updateMaxWithKey :: (CritBitKey k, Ord k) => k -> KV k -> Bool
+t_updateMaxWithKey k (KV kvs) = C.toList (C.updateMaxWithKey f (C.fromList kvs')) == Map.toList (Map.updateMaxWithKey f (Map.fromList kvs')) where
+  kvs' = map (\(a, b) -> (a, (k, b))) kvs
+  f k' (_, x)
+    | even x = Nothing
+    | otherwise = Just (k', x + 3)
 
 propertiesFor :: (Arbitrary k, CritBitKey k, Ord k, Show k) => k -> [Test]
 propertiesFor t = [
@@ -141,6 +167,10 @@ propertiesFor t = [
   , testProperty "t_findMax" $ t_findMax t
   , testProperty "t_deleteMin" $ t_deleteMin t
   , testProperty "t_deleteMax" $ t_deleteMax t
+  , testProperty "t_updateMin" $ t_updateMin t
+  , testProperty "t_updateMax" $ t_updateMax t
+  , testProperty "t_updateMinWithKey" $ t_updateMinWithKey t
+  , testProperty "t_updateMaxWithKey" $ t_updateMaxWithKey t
   ]
 
 properties :: [Test]
