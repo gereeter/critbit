@@ -188,6 +188,10 @@ main = do
       , bgroup "map"  $ let f = (+3)
                         in function nf (C.map f) (Map.map f) (H.map f) (fmap f)
       , bgroup "union" $ twoMaps C.unionR Map.union H.union Trie.unionR
+      , bgroup "findMin" $ function nf C.findMin Map.findMin H.findMin Trie.findMin
+      , bgroup "findMax" $ function nf C.findMax Map.findMax H.findMax Trie.findMax
+      , bgroup "deleteMin" $ function nf C.deleteMin Map.deleteMin H.deleteMin Trie.deleteMin
+      , bgroup "deleteMax" $ function nf C.deleteMax Map.deleteMax H.deleteMax Trie.deleteMax
       ]
     , bgroup "text" [
         bgroup "fromList" [
