@@ -138,10 +138,10 @@ module Data.CritBit.Tree
     , updateMax
     , updateMinWithKey
     , updateMaxWithKey
-    -- , minView
-    -- , maxView
-    -- , minViewWithKey
-    -- , maxViewWithKey
+    , minView
+    , maxView
+    , minViewWithKey
+    , maxViewWithKey
     ) where
 
 import Data.CritBit.Core
@@ -550,3 +550,31 @@ updateMaxWithKey f (CritBit root) = CritBit (go root) where
   go i@(Internal left right byte otherBits) = case (go right) of
     Empty -> left
     r -> id $! i {iright = r}
+
+-- | /O(log n)/. Retrieves the value associated with maximal key of the map,
+-- and the map stripped of that element, or 'Nothing' if passed an empty map.
+minView :: CritBit k v -> Maybe (v, CritBit k v)
+minView (CritBit Empty) = Nothing
+minView tree = Just (first snd $ deleteFindMin tree)
+
+-- | /O(log n)/. Retrieves the value associated with maximal key of the map,
+-- and the map stripped of that element, or 'Nothing' if passed an empty map.
+maxView :: CritBit k v -> Maybe (v, CritBit k v)
+maxView (CritBit Empty) = Nothing
+maxView tree = Just (first snd $ deleteFindMax tree)
+
+-- Update the 1st component of a tuple (special case of Control.Arrow.first)
+first :: (a -> b) -> (a,c) -> (b,c)
+first f (x,y) = (f x, y)
+
+-- | /O(log n)/. Retrieves the minimal (key,value) pair of the map,
+-- and the map stripped of that element, or 'Nothing' if passed an empty map.
+minViewWithKey :: CritBit k v -> Maybe ((k, v), CritBit k v)
+minViewWithKey (CritBit Empty) = Nothing
+minViewWithKey tree = Just (deleteFindMin tree)
+
+-- | /O(log n)/. Retrieves the maximal (key,value) pair of the map,
+-- and the map stripped of that element, or 'Nothing' if passed an empty map.
+maxViewWithKey :: CritBit k v -> Maybe ((k, v), CritBit k v)
+maxViewWithKey (CritBit Empty) = Nothing
+maxViewWithKey tree = Just (deleteFindMax tree)
