@@ -127,11 +127,11 @@ module Data.CritBit.Tree
     -- , isProperSubmapOf
     -- , isProperSubmapOfBy
 
-    -- -- * Min\/Max
-    -- , findMin
-    -- , findMax
-    -- , deleteMin
-    -- , deleteMax
+    -- * Min\/Max
+    , findMin
+    , findMax
+    , deleteMin
+    , deleteMax
     -- , deleteFindMin
     -- , deleteFindMax
     -- , updateMin
@@ -434,3 +434,64 @@ union a b = unionL a b
 map :: (CritBitKey k) => (v -> w) -> CritBit k v -> CritBit k w
 map = fmap
 
+-- | /O(log n)/. The minimal key of the map. Calls 'error' if the map is empty.
+findMin :: CritBit k v -> (k, v)
+findMin (CritBit root) = go root where
+  go Empty = error "Data.CritBit.Tree.findMin: empty tree"
+  go (Leaf k v) = (k, v)
+  go (Internal l _ _ _) = go l
+
+-- | /O(log n)/. The maximal key of the map. Calls 'error' if the map is empty.
+findMax :: CritBit k v -> (k, v)
+findMax (CritBit root) = go root where
+  go Empty = error "Data.CritBit.Tree.findMax: empty tree"
+  go (Leaf k v) = (k, v)
+  go (Internal _ r _ _) = go r
+
+{- These implementations aren't as fast as the one used.
+-- 6.86 ms
+deleteMin :: CritBit k v -> CritBit k v
+deleteMin (CritBit root) = go root CritBit where
+  go Empty _ = Empty
+  go (Leaf _ _) cont = cont Empty
+  go i@(Internal left right byte otherBits) cont = go left $ \new -> case new of
+    Empty -> cont right
+    l -> cont $! i {ileft = l}
+
+-- 6.98 ms
+deleteMin :: CritBit k v -> CritBit k v
+deleteMin (CritBit Empty) = Empty
+deleteMin (CritBit (Leaf _ _)) = CritBit Empty
+deleteMin (CritBit (Internal left right byte otherBits)) = go left right byte otherBits CritBit where
+  go Empty _ _ _ _ = error "unpossible!"
+  go (Leaf _ _) oldRight _ _ cont = cont oldRight
+  go i@(Internal left right byte otherBits) oldRight oldByte oldOtherBits cont = go left right byte otherBits $ \new -> cont $! Internal new oldRight oldByte oldOtherBits
+
+-- 6.80 ms
+deleteMin :: CritBit k v -> CritBit k v
+deleteMin (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf _ _) = Empty
+  go i@(Internal left right byte otherBits) = case (go left) of
+    Empty -> right
+    l -> i {ileft = l}
+-}
+
+-- 6.41 ms
+-- | /O(log n)/. Delete the minimal key. Returns an empty map if the map is empty.
+deleteMin :: CritBit k v -> CritBit k v
+deleteMin (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf _ _) = Empty
+  go i@(Internal left right byte otherBits) = case (go left) of
+    Empty -> right
+    l -> id $! i {ileft = l}
+
+-- | /O(log n)/. Delete the maximal key. Returns an empty map if the map is empty.
+deleteMax :: CritBit k v -> CritBit k v
+deleteMax (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf _ _) = Empty
+  go i@(Internal left right byte otherBits) = case (go right) of
+    Empty -> left
+    r -> id $! i {iright = r}
