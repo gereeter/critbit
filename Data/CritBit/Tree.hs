@@ -10,11 +10,11 @@
 module Data.CritBit.Tree
     (
     -- * Operators
-    (!)
+      (!)
     -- , (\\)
 
     -- * Query
-      null
+    , null
     , size
     , member
     , notMember
@@ -146,7 +146,7 @@ module Data.CritBit.Tree
 
 import Data.CritBit.Core
 import Data.CritBit.Types.Internal
-import Prelude hiding (foldl, foldr, lookup, null, map)
+import Prelude hiding (foldl, foldr, lookup, null, map, filter)
 import qualified Data.List as List
 
 -- | O(log n). Find the value at a key. Calls 'error' when the element can not be found.
@@ -154,7 +154,7 @@ import qualified Data.List as List
 -- > fromList [("a",5), ("b",3)] ! "c"    Error: element not in the map
 -- > fromList [("a",5), ("a",3)] ! "a" == 5
 (!) :: (CritBitKey k) => CritBit k v -> k -> v
-m ! k = lookupWith (error "Data.CritBit.Tree.!: element not in map") id k m
+(!) m k = lookupWith (error "Data.CritBit.Tree.!: element not in map") id k m
 
 -- | /O(1)/. Is the map empty?
 --
@@ -301,7 +301,7 @@ toDescList :: CritBit k v -> [(k, v)]
 toDescList (CritBit root) = go root [] where
   go Empty next = next
   go (Leaf k v) next = (k, v) : next
-  go (Internal left right byte otherBits) = go left (go right next)
+  go (Internal left right byte otherBits) next = go right (go left next)
 
 filter :: (v -> Bool) -> CritBit k v -> CritBit k v
 filter = filterWithKey . const
@@ -548,7 +548,7 @@ deleteMax (CritBit root) = CritBit (go root) where
 
 -- | /O(log n)/. Delete and find the minimal element.
 deleteFindMin :: CritBit k v -> ((k, v), CritBit k v)
-deleteFindMin (CritBit root) = go root where
+deleteFindMin (CritBit root) = second CritBit (go root) where
   go Empty = error "Data.CritBit.Tree.deleteFindMin: empty map"
   go (Leaf k v) = ((k, v), Empty)
   go i@(Internal left right byte otherBits) = case (go left) of
@@ -557,7 +557,7 @@ deleteFindMin (CritBit root) = go root where
 
 -- | /O(log n)/. Delete and find the maximal element.
 deleteFindMax :: CritBit k v -> ((k, v), CritBit k v)
-deleteFindMax (CritBit root) = go root where
+deleteFindMax (CritBit root) = second CritBit (go root) where
   go Empty = error "Data.CritBit.Tree.deleteFindMax: empty map"
   go (Leaf k v) = ((k, v), Empty)
   go i@(Internal left right byte otherBits) = case (go right) of
@@ -606,10 +606,6 @@ maxView :: CritBit k v -> Maybe (v, CritBit k v)
 maxView (CritBit Empty) = Nothing
 maxView tree = Just (first snd $ deleteFindMax tree)
 
--- Update the 1st component of a tuple (special case of Control.Arrow.first)
-first :: (a -> b) -> (a,c) -> (b,c)
-first f (x,y) = (f x, y)
-
 -- | /O(log n)/. Retrieves the minimal (key,value) pair of the map,
 -- and the map stripped of that element, or 'Nothing' if passed an empty map.
 minViewWithKey :: CritBit k v -> Maybe ((k, v), CritBit k v)
@@ -621,3 +617,10 @@ minViewWithKey tree = Just (deleteFindMin tree)
 maxViewWithKey :: CritBit k v -> Maybe ((k, v), CritBit k v)
 maxViewWithKey (CritBit Empty) = Nothing
 maxViewWithKey tree = Just (deleteFindMax tree)
+
+-- Update the 1st component of a tuple (special case of Control.Arrow.first)
+first :: (a -> b) -> (a,c) -> (b,c)
+first f (x,y) = (f x, y)
+
+second :: (a -> b) -> (c,a) -> (c,b)
+second f (x,y) = (x, f y)
