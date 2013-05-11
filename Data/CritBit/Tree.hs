@@ -108,13 +108,13 @@ module Data.CritBit.Tree
     -- , fromDistinctAscList
 
     -- * Filter
-    -- , filter
-    -- , filterWithKey
+    , filter
+    , filterWithKey
     -- , partition
     -- , partitionWithKey
 
-    -- , mapMaybe
-    -- , mapMaybeWithKey
+    , mapMaybe
+    , mapMaybeWithKey
     -- , mapEither
     -- , mapEitherWithKey
 
@@ -302,6 +302,36 @@ toDescList (CritBit root) = go root [] where
   go Empty next = next
   go (Leaf k v) next = (k, v) : next
   go (Internal left right byte otherBits) = go left (go right next)
+
+filter :: (v -> Bool) -> CritBit k v -> CritBit k v
+filter = filterWithKey . const
+
+filterWithKey :: (k -> v -> Bool) -> CritBit k v -> CritBit k v
+filterWithKey p (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go l@(Leaf k v)
+    | p k v     = l
+    | otherwise = Empty
+  go i@(Internal left right byte otherBits) = case (go left, go right) of
+    (Empty, Empty) -> Empty
+    (Empty, r) -> r
+    (l, Empty) -> l
+    (l, r) -> id $! i {ileft = l, iright = r}
+
+mapMaybe :: (v -> Maybe w) -> CritBit k v -> CritBit k w
+mapMaybe = mapMaybeWithKey . const
+
+mapMaybeWithKey :: (k -> v -> Maybe w) -> CritBit k v -> CritBit k w
+mapMaybeWithKey f (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf k v) = case f k v of
+    Nothing -> Empty
+    Just w -> Leaf k w
+  go i@(Internal left right byte otherBits) = case (go left, go right) of
+    (Empty, Empty) -> Empty
+    (Empty, r) -> r
+    (l, Empty) -> l
+    (l, r) -> id $! i {ileft = l, iright = r}
 
 -- | /O(1)/. A map with a single element.
 --
