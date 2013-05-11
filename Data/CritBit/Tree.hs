@@ -134,10 +134,10 @@ module Data.CritBit.Tree
     , deleteMax
     -- , deleteFindMin
     -- , deleteFindMax
-    -- , updateMin
-    -- , updateMax
-    -- , updateMinWithKey
-    -- , updateMaxWithKey
+    , updateMin
+    , updateMax
+    , updateMinWithKey
+    , updateMaxWithKey
     -- , minView
     -- , maxView
     -- , minViewWithKey
@@ -492,6 +492,36 @@ deleteMax :: CritBit k v -> CritBit k v
 deleteMax (CritBit root) = CritBit (go root) where
   go Empty = Empty
   go (Leaf _ _) = Empty
+  go i@(Internal left right byte otherBits) = case (go right) of
+    Empty -> left
+    r -> id $! i {iright = r}
+
+-- | /O(log n)/. Update the value at the minimal key.
+updateMin :: (v -> Maybe v) -> CritBit k v -> CritBit k v
+updateMin = updateMinWithKey . const
+
+-- | /O(log n)/. Update the value at the maximal key.
+updateMax :: (v -> Maybe v) -> CritBit k v -> CritBit k v
+updateMax = updateMaxWithKey . const
+
+-- | /O(log n)/. Update the value at the minimal key.
+updateMinWithKey :: (k -> v -> Maybe v) -> CritBit k v -> CritBit k v
+updateMinWithKey f (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf k v) = case f k v of
+    Nothing -> Empty
+    Just v' -> Leaf k v'
+  go i@(Internal left right byte otherBits) = case (go left) of
+    Empty -> right
+    l -> id $! i {ileft = l}
+
+-- | /O(log n)/. Update the value at the maximal key.
+updateMaxWithKey :: (k -> v -> Maybe v) -> CritBit k v -> CritBit k v
+updateMaxWithKey f (CritBit root) = CritBit (go root) where
+  go Empty = Empty
+  go (Leaf k v) = case f k v of
+    Nothing -> Empty
+    Just v' -> Leaf k v'
   go i@(Internal left right byte otherBits) = case (go right) of
     Empty -> left
     r -> id $! i {iright = r}
