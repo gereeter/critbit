@@ -204,6 +204,46 @@ main = do
           bench "critbit" $ nf C.deleteMax b_critbit
         , bench "map" $ nf Map.deleteMax b_map
         ]
+      , bgroup "updateMin" $ [
+          bgroup "delete" $ [
+            bench "critbit" $ nf (uncurry C.updateMin) (const Nothing, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMin) (const Nothing, b_map)
+          ]
+        , bgroup "map" $ [
+            bench "critbit" $ nf (uncurry C.updateMin) (Just, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMin) (Just, b_map)
+          ]
+        ]
+      , bgroup "updateMax" $ [
+          bgroup "delete" $ [
+            bench "critbit" $ nf (uncurry C.updateMax) (const Nothing, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMax) (const Nothing, b_map)
+          ]
+        , bgroup "map" $ [
+            bench "critbit" $ nf (uncurry C.updateMax) (Just, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMax) (Just, b_map)
+          ]
+        ]
+      , bgroup "updateMinWithKey" $ [
+          bgroup "delete" $ [
+            bench "critbit" $ nf (uncurry C.updateMinWithKey) (const (const Nothing), b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMinWithKey) (const (const Nothing), b_map)
+          ]
+        , bgroup "map" $ [
+            bench "critbit" $ nf (uncurry C.updateMinWithKey) (const Just, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMinWithKey) (const Just, b_map)
+          ]
+        ]
+      , bgroup "updateMaxWithKey" $ [
+          bgroup "delete" $ [
+            bench "critbit" $ nf (uncurry C.updateMaxWithKey) (const (const Nothing), b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMaxWithKey) (const (const Nothing), b_map)
+          ]
+        , bgroup "map" $ [
+            bench "critbit" $ nf (uncurry C.updateMaxWithKey) (const Just, b_critbit)
+          , bench "map" $ nf (uncurry Map.updateMaxWithKey) (const Just, b_map)
+          ]
+        ]
       ]
     , bgroup "text" [
         bgroup "fromList" [
