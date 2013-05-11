@@ -100,8 +100,8 @@ module Data.CritBit.Tree
     -- , fromListWithKey
 
     -- ** Ordered lists
-    -- , toAscList
-    -- , toDescList
+    , toAscList
+    , toDescList
     -- , fromAscList
     -- , fromAscListWith
     -- , fromAscListWithKey
@@ -289,6 +289,19 @@ byteCompare a b = go 0
 fromList :: (CritBitKey k) => [(k, v)] -> CritBit k v
 fromList = List.foldl' (flip (uncurry insert)) empty
 {-# INLINABLE fromList #-}
+
+-- TODO: Implement it for list fusion.
+-- | /O(n)/. Convert the map to a list of key/value pairs where the keys are in ascending order.
+toAscList :: CritBit k v -> [(k, v)]
+toAscList = toList
+
+-- TODO: Implement it for list fusion.
+-- | /O(n)/. Convert the map to a list of key/value pairs where the keys are in descending order.
+toDescList :: CritBit k v -> [(k, v)]
+toDescList (CritBit root) = go root [] where
+  go Empty next = next
+  go (Leaf k v) next = (k, v) : next
+  go (Internal left right byte otherBits) = go left (go right next)
 
 -- | /O(1)/. A map with a single element.
 --
