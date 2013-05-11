@@ -10,7 +10,7 @@
 module Data.CritBit.Tree
     (
     -- * Operators
-    , (!)
+    (!)
     -- , (\\)
 
     -- * Query
